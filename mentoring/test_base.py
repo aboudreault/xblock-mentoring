@@ -25,6 +25,7 @@
 
 from workbench import scenarios
 from workbench.test.selenium_test import SeleniumTest
+from workbench.scenarios import add_xml_scenario
 
 from .utils import load_scenarios_from_path
 
@@ -41,6 +42,7 @@ class MentoringBaseTest(SeleniumTest):
         scenarios.SCENARIOS.clear()
         scenarios_list = load_scenarios_from_path('../tests/xml')
         for identifier, title, xml in scenarios_list:
+            add_xml_scenario(identifier, title, xml)
             self.addCleanup(scenarios.remove_scenario, identifier)
 
         # Suzy opens the browser to visit the workbench
@@ -59,4 +61,3 @@ class MentoringBaseTest(SeleniumTest):
         self.browser.find_element_by_link_text(page_name).click()
         mentoring = self.browser.find_element_by_css_selector(css_selector)
         return mentoring
-

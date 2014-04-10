@@ -95,4 +95,3 @@ class AnswerBlockTest(MentoringBaseTest):
         submit.click()
         self.assertEqual(progress.text, '')
         self.assertTrue(progress.find_elements_by_css_selector('img'))
-
