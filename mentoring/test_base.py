@@ -23,6 +23,10 @@
 
 # Imports ###########################################################
 
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 from workbench import scenarios
 from workbench.test.selenium_test import SeleniumTest
 from workbench.scenarios import add_xml_scenario
@@ -57,7 +61,13 @@ class MentoringBaseTest(SeleniumTest):
         Navigate to the page `page_name`, as listed on the workbench home
         Returns the DOM element on the visited page located by the `css_selector`
         """
+
         self.browser.get(self.live_server_url)
         self.browser.find_element_by_link_text(page_name).click()
+
+        WebDriverWait(self.browser, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, css_selector))
+        )
+
         mentoring = self.browser.find_element_by_css_selector(css_selector)
         return mentoring

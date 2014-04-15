@@ -28,6 +28,10 @@ function AnswerBlock(runtime, element) {
             else {
                 checkmark.addClass('checkmark-incorrect icon-exclamation fa-exclamation');
             }
+
+            // TODO Modify this to be handled in mentoring.js automatically for all children.
+            // This is used in workbench tests
+            $(element).data('completed', result.completed);
         },
 
         clearResult: function() {
