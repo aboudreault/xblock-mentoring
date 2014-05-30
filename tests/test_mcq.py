@@ -37,24 +37,23 @@ class MCQBlockTest(MentoringBaseTest):
         Mentoring MCQ should display tips according to user choice
         """
         # Initial MCQ status
-        mentoring = self.go_to_page('MCQ 1')
+        mentoring = self.go_to_page('Mcq 1')
         mcq1 = mentoring.find_element_by_css_selector('fieldset.choices')
         mcq2 = mentoring.find_element_by_css_selector('fieldset.rating')
-        messages = mentoring.find_element_by_css_selector('.messages')
-        progress = mentoring.find_element_by_css_selector('.progress > .indicator')
+        messages = mentoring.find_elements_by_css_selector('.feedback')
 
-        self.assertEqual(messages.text, '')
-        self.assertFalse(messages.find_elements_by_xpath('./*'))
-        self.assertEqual(progress.text, '')
-        self.assertFalse(progress.find_elements_by_xpath('./*'))
+        self.assertEqual(messages[0].text, '')
+        self.assertEqual(messages[1].text, '')
+        self.assertFalse(messages[0].find_elements_by_xpath('./*'))
+        self.assertFalse(messages[1].find_elements_by_xpath('./*'))
 
-        mcq1_legend = mcq1.find_element_by_css_selector('legend')
+        mcq1_legend = mcq1.find_element_by_css_selector('legend > p')
         mcq2_legend = mcq2.find_element_by_css_selector('legend')
         self.assertEqual(mcq1_legend.text, 'Do you like this MCQ?')
         self.assertEqual(mcq2_legend.text, 'How much do you rate this MCQ?')
 
-        mcq1_choices = mcq1.find_elements_by_css_selector('.choices .choice label')
-        mcq2_choices = mcq2.find_elements_by_css_selector('.choices .choice label')
+        mcq1_choices = mcq1.find_elements_by_css_selector('.choices-list .choice label')
+        mcq2_choices = mcq2.find_elements_by_css_selector('.choices-list .choice label')
 
         self.assertEqual(len(mcq1_choices), 3)
         self.assertEqual(len(mcq2_choices), 6)
@@ -91,28 +90,33 @@ class MCQBlockTest(MentoringBaseTest):
         self.assertEqual(mcq2_choices_input[4].get_attribute('value'), '5')
         self.assertEqual(mcq2_choices_input[5].get_attribute('value'), 'notwant')
 
-        # Submit without selecting anything
-        submit = mentoring.find_element_by_css_selector('input.submit')
-        submit.click()
+        submit = mentoring.find_element_by_css_selector('input.input-main')
 
-        tips = messages.find_elements_by_xpath('./*')
-        self.assertEqual(len(tips), 2)
-        self.assertEqual(tips[0].text, 'To the question "Do you like this MCQ?", you have not provided an answer.')
-        self.assertEqual(tips[1].text, 'To the question "How much do you rate this MCQ?", you have not provided an answer.')
-        self.assertEqual(progress.text, '')
-        self.assertFalse(progress.find_elements_by_xpath('./*'))
+        # submit shouldn't be enabled
+        self.assertFalse(submit.is_enabled())
 
-        # Select only one option
+        # Select option in mcq1
         mcq1_choices_input[1].click()
+
+        # mcq2 has no selection. submit shouldn't be enabled
+        self.assertFalse(submit.is_enabled())
+
+        # Select option in mcq2
+        mcq2_choices_input[2].click()
+
+        # submit should be enabled
+        self.assertTrue(submit.is_enabled())
+
         submit.click()
 
         time.sleep(1)
-        tips = messages.find_elements_by_xpath('./*')
+        tips = [
+            messages[0].find_element_by_css_selector('.tip > p'),
+            messages[1].find_element_by_css_selector('.tip > p')
+        ]
         self.assertEqual(len(tips), 2)
-        self.assertEqual(tips[0].text, 'To the question "Do you like this MCQ?", you answered "Maybe not".\nAh, damn.')
-        self.assertEqual(tips[1].text, 'To the question "How much do you rate this MCQ?", you have not provided an answer.')
-        self.assertEqual(progress.text, '')
-        self.assertFalse(progress.find_elements_by_xpath('./*'))
+        self.assertEqual(tips[0].text, 'Ah, damn.')
+        self.assertEqual(tips[1].text, 'Will do better next time...')
 
         # One with only display tip, one with reject tip - should not complete
         mcq1_choices_input[0].click()
@@ -120,12 +124,13 @@ class MCQBlockTest(MentoringBaseTest):
         submit.click()
 
         time.sleep(1)
-        tips = messages.find_elements_by_xpath('./*')
+        tips = [
+            messages[0].find_element_by_css_selector('.tip > p'),
+            messages[1].find_element_by_css_selector('.tip > p')
+        ]
         self.assertEqual(len(tips), 2)
-        self.assertEqual(tips[0].text, 'To the question "Do you like this MCQ?", you answered "Yes".\nGreat!')
-        self.assertEqual(tips[1].text, 'To the question "How much do you rate this MCQ?", you answered "3".\nWill do better next time...')
-        self.assertEqual(progress.text, '')
-        self.assertFalse(progress.find_elements_by_xpath('./*'))
+        self.assertEqual(tips[0].text, 'Great!')
+        self.assertEqual(tips[1].text, 'Will do better next time...')
 
         # Only display tips, to allow to complete
         mcq1_choices_input[0].click()
@@ -133,11 +138,13 @@ class MCQBlockTest(MentoringBaseTest):
         submit.click()
 
         time.sleep(1)
-        tips = messages.find_elements_by_xpath('./*')
-        self.assertEqual(len(tips), 3)
-        self.assertEqual(tips[0].text, 'To the question "Do you like this MCQ?", you answered "Yes".\nGreat!')
-        self.assertEqual(tips[1].text, 'To the question "How much do you rate this MCQ?", you answered "4".\nI love good grades.')
-        self.assertEqual(tips[2].text, 'Congratulations!\nAll is good now...') # Includes child <html>
-        self.assertEqual(progress.text, '')
-        self.assertTrue(progress.find_elements_by_css_selector('img'))
+        tips = [
+            messages[0].find_element_by_css_selector('.tip > p'),
+            messages[1].find_element_by_css_selector('.tip > p')
+        ]
+        self.assertEqual(len(tips), 2)
+        self.assertEqual(tips[0].text, 'Great!')
+        self.assertEqual(tips[1].text, 'I love good grades.')
 
+        feedback = mentoring.find_element_by_css_selector('.message.completed p')
+        self.assertEqual(feedback.text, 'Congratulations!')
